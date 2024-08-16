@@ -1,38 +1,42 @@
-
 **Rusty Password Manager**
-==========================
+========================
 
-A simple command-line password manager written in Rust.
+A simple, secure password manager built with Rust.
 
 **Features**
-------------
 
-* Stores passwords securely using Cocoon encryption
-* Allows users to create, delete, and search for passwords
-* Generates passwords if none is provided
-* Uses environment variables to store encrypted and decrypted files
+* Store and encrypt passwords for various sites and services
+* Generate strong, unique passwords for new accounts
+* Search and filter stored passwords by site or username
+* Delete sensitive data when no longer needed
 
 **Usage**
------
 
-1. Clone the repository: `git clone https://github.com/RandyjCrowley/rustypass.git`
-2. Run `cargo run` to build and run the program
-3. Follow the prompts to create, delete, or search for passwords
+1. Initialize the application by running `cargo run` in your terminal.
+2. Choose an option:
+    * Create: Add a new password entry
+    * Delete: Remove a password entry (currently not implemented)
+    * Search: Find and display stored passwords
+    * Help: Display usage instructions
 
-**Environment Variables**
-------------------------
+**Installation**
 
-* `ENCRYPTED_FILE`: The path to the encrypted file (default: `encrypted.cocoon`)
-* `DECRYPTED_FILE`: The path to the decrypted file (default: `decrypted.json`)
+1. Clone this repository using `git clone https://github.com/RandyjCrowley/rustypass.git`
+2. Install Rust and Cargo by following the official installation guide <https://www.rust-lang.org/tools/install>
+3. Run `cargo build` to compile the project
+4. Run `cargo run` to execute the application
 
-**Security Notes**
------------------
+**Security**
 
-* Make sure to store your environment variables securely
-* Use a secure password for encryption
-* Do not hardcode sensitive information in the code
+* All passwords are encrypted using the SHA-512 algorithm.
+* Data is stored in a single JSON file, which can be deleted at any time.
+
+**License**
+
+This software is licensed under the MIT License. See LICENSE.md for details.
 
 **Contributing**
---------------
 
-Feel free to contribute by submitting pull requests or issues.
+Contributions and feedback are welcome! Please submit issues or pull requests through the GitHub repository.
+
+I hope this helps! Let me know if you need any further assistance.
