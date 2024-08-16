@@ -42,7 +42,7 @@ fn verify_password_hash(password: &str) -> bool {
     computed_hash == stored_hash
 }
 
-fn clear_previous_lines(line_count: usize) {
+pub(crate) fn clear_previous_lines(line_count: usize) {
     for _ in 0..line_count {
         print!("\x1b[A\x1b[2K");
     }
