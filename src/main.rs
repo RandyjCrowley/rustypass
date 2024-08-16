@@ -1,4 +1,3 @@
-use scopeguard::defer;
 use std::{env, fs, io, panic};
 use std::path::Path;
 
@@ -9,10 +8,6 @@ mod models;
 
 fn main() {
     let master_password = auth::initialize_application();
-
-    // Ensure the cleanup (encrypt and delete plaintext passwords) happens on exit or panic
-    let encrypted_path = env::var("ENCRYPTED_FILE").expect("ENCRYPTED_FILE not set");
-    let decrypted_path = env::var("DECRYPTED_FILE").expect("DECRYPTED_FILE not set");
 
     let result = panic::catch_unwind(|| {
         println!("######################");
@@ -41,7 +36,7 @@ fn main() {
 }
 
 /// Ensures that the decrypted file is encrypted and deleted.
-fn cleanup_and_encrypt(master_password: &str, decrypted_path: &str, encrypted_path: &str) {
+fn cleanup_and_encrypt(master_password: &str, decrypted_path: &str) {
     if Path::new(decrypted_path).exists() {
         file_ops::encrypt_file(master_password.as_bytes());
         fs::remove_file(decrypted_path).expect("Failed to delete decrypted file during cleanup");
