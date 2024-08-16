@@ -1,7 +1,6 @@
 use std::{env, process};
 use sha3::{Sha3_512, Digest};
 use rpassword::read_password;
-// use hex;
 use dotenv::dotenv;
 
 pub fn initialize_application() -> String {
@@ -47,4 +46,3 @@ pub(crate) fn clear_previous_lines(line_count: usize) {
         print!("\x1b[A\x1b[2K");
     }
 }
-

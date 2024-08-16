@@ -19,6 +19,7 @@ fn main() {
         io::stdin()
             .read_line(&mut user_input)
             .expect("Failed to read line.");
+
         let user_input = user_input.trim().to_ascii_lowercase();
 
         match user_input.as_str() {

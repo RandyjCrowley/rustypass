@@ -6,4 +6,3 @@ pub struct Information {
     pub username: String,
     pub password: String,
 }
-
