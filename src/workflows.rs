@@ -5,97 +5,96 @@ use std::path::Path;
 use serde_json::Value;
 use crate::auth;
 
-pub fn create_password_workflow(master_password: &str) {
-    let encrypted_path = env::var("ENCRYPTED_FILE").expect("ENCRYPTED_FILE not set");
-    let decrypted_path = env::var("DECRYPTED_FILE").expect("DECRYPTED_FILE not set");
+pub fn create_password_workflow(master_password: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let encrypted_path = env::var("ENCRYPTED_FILE")?;
+    let decrypted_path = env::var("DECRYPTED_FILE")?;
 
-    if Path::new(&encrypted_path).exists() {
-        decrypt_file(master_password.as_bytes());
+    if !Path::new(&encrypted_path).exists() {
+        create_empty_decrypted_file(&decrypted_path)?;
     } else {
-        create_empty_decrypted_file(&decrypted_path);
+        decrypt_file(master_password.as_bytes())?;
     }
 
-    let mut data = read_decrypted_data(&decrypted_path);
-    let new_entry = collect_user_information();
-
-    append_new_entry(&mut data, new_entry);
-    write_decrypted_data(&decrypted_path, &data);
-    encrypt_and_cleanup(master_password.as_bytes(), &decrypted_path);
+    let mut data = read_decrypted_data(&decrypted_path)?;
+    let new_entry = collect_user_information()?;
+    append_new_entry(&mut data, new_entry).expect("TODO: panic message");
+    write_decrypted_data(&decrypted_path, &data)?;
+    encrypt_and_cleanup(master_password.as_bytes(), &decrypted_path)?;
 
     auth::clear_previous_lines(100);
+    Ok(())
 }
 
-fn collect_user_information() -> Information {
-    let mut site = String::new();
-    let mut username = String::new();
-    let mut password_input = String::new();
+fn collect_user_information() -> Result<Information, Box<dyn std::error::Error>> {
+    let mut inputs = vec![String::new(), String::new(), String::new()];
+    let prompts = ["site", "username", "password"];
 
-    println!("Enter your site:");
-    io::stdin().read_line(&mut site).expect("Failed to read site");
-    println!("Enter your username:");
-    io::stdin().read_line(&mut username).expect("Failed to read username");
-    println!("Enter your password:");
-    io::stdin().read_line(&mut password_input).expect("Failed to read password");
-
-    let site = site.trim().to_string();
-    let username = username.trim().to_string();
-    let password_input = if password_input.trim().is_empty() {
-        println!("Generating password...");
-        "password".to_string()
-    } else {
-        password_input.trim().to_string()
-    };
-
-    Information {
-        site,
-        username,
-        password: password_input,
+    for (i, prompt) in prompts.iter().enumerate() {
+        println!("Enter your {}:", prompt);
+        io::stdin().read_line(&mut inputs[i])?;
     }
+
+    Ok(Information {
+        site: inputs[0].trim().to_string(),
+        username: inputs[1].trim().to_string(),
+        password: if inputs[2].trim().is_empty() {
+            println!("Generating password...");
+            "password".to_string()
+        } else {
+            inputs[2].trim().to_string()
+        },
+    })
 }
 
-fn append_new_entry(data: &mut Value, new_entry: Information) {
-    if let Some(array) = data.as_array_mut() {
-        array.push(serde_json::to_value(new_entry).expect("Failed to convert new entry to JSON"));
+fn append_new_entry(data: &mut Value, new_entry: Information) -> Result<(), Box<dyn std::error::Error>> {
+    if let Value::Array(ref mut array) = data {
+        array.push(serde_json::to_value(new_entry)?);
     } else {
-        *data = Value::Array(vec![serde_json::to_value(new_entry).expect("Failed to convert new entry to JSON")]);
+        *data = Value::Array(vec![serde_json::to_value(new_entry)?]);
     }
+    Ok(())
 }
 
-pub fn delete_password_workflow(_password: &str) {
+pub fn delete_password_workflow(_password: &str) -> Result<(), Box<dyn std::error::Error>>{
     todo!("Implement delete_password_workflow");
 }
 
-pub fn search_password_workflow(password: &str) {
+pub fn search_password_workflow(password: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let encrypted_path = env::var("ENCRYPTED_FILE")?;
+    let decrypted_path = env::var("DECRYPTED_FILE")?;
+
     loop {
+        print!("\x1B[2J\x1B[1;1H");
         let mut search = String::new();
         println!("What would you like to search by (site, username, password):");
-        io::stdin().read_line(&mut search).expect("Failed to read search input");
+        io::stdin().read_line(&mut search)?;
 
         let user_input = search.trim().to_ascii_lowercase();
 
-        if user_input == "site" || user_input == "username" || user_input == "password" {
-            let mut keyword = String::new();
-            println!("What {} would you like to search for?", user_input);
-            io::stdin().read_line(&mut keyword).expect("Failed to read search keyword");
+        if !["site", "username", "password", "quit", "back"].contains(&user_input.as_str()) {
+            auth::clear_previous_lines(4);
+            continue;
+        }
 
-            let encrypted_path = env::var("ENCRYPTED_FILE").expect("ENCRYPTED_FILE not set");
-            let decrypted_path = env::var("DECRYPTED_FILE").expect("DECRYPTED_FILE not set");
-
-            if Path::new(&encrypted_path).exists() {
-                decrypt_file(password.as_bytes());
-            } else {
-                create_empty_decrypted_file(&decrypted_path);
-            }
-
-            let data = read_decrypted_data(&decrypted_path);
-            handle_search(data, keyword.trim(), user_input.as_str());
-        } else if user_input == "quit" {
+        if user_input == "quit" {
             process::exit(1);
         } else if user_input == "back" {
-            todo!("Implement logic to go back to the main menu");
-        } else {
-            auth::clear_previous_lines(4);
+            // todo!("Implement logic to go back to the main menu");
+            continue;
         }
+
+        let mut keyword = String::new();
+        println!("What {} would you like to search for?", user_input);
+        io::stdin().read_line(&mut keyword)?;
+
+        if Path::new(&encrypted_path).exists() {
+            decrypt_file(password.as_bytes())?;
+        } else {
+            create_empty_decrypted_file(&decrypted_path)?;
+        }
+
+        let data = read_decrypted_data(&decrypted_path)?;
+        handle_search(data, keyword.trim(), user_input.as_str());
     }
 }
 
@@ -105,18 +104,18 @@ fn handle_search(json_data: Value, user_value: &str, user_key: &str) {
         for item in arr {
             if let Value::Object(ref map) = item {
                 if let Some(value) = map.get(user_key) {
-                    if value == &Value::String(user_value.to_string()) {
-                        println!("Match found:");
-                        println!("  Site: {}", item["site"]);
-                        println!("  Username: {}", item["username"]);
-                        println!("  Password: {}", item["password"]);
-                        println!();
+                    if let Value::String(ref val) = value {
+                        if val == user_value {
+                            println!("Match found:");
+                            println!("  Site: {}", item["site"]);
+                            println!("  Username: {}", item["username"]);
+                            println!("  Password: {}", item["password"]);
+                            println!();
+                        }
                     }
                 }
             }
         }
-    } else {
-        println!("Expected a JSON array at the top level.");
     }
 }
 
@@ -137,9 +136,10 @@ pub(crate) fn display_help_workflow() {
     println!("  You will be prompted to enter your master password for certain actions.");
 }
 
-fn encrypt_and_cleanup(password: &[u8], decrypted_path: &str) {
-    encrypt_file(password);
+fn encrypt_and_cleanup(password: &[u8], decrypted_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    encrypt_file(password)?;
     if Path::new(decrypted_path).exists() {
-        fs::remove_file(decrypted_path).expect("Failed to delete decrypted file");
+        fs::remove_file(decrypted_path)?;
     }
+    Ok(())
 }

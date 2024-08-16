@@ -1,4 +1,4 @@
-use std::{io, panic};
+use std::{io, process};
 
 mod auth;
 mod file_ops;
@@ -6,31 +6,49 @@ mod workflows;
 mod models;
 
 fn main() {
-    let master_password = auth::initialize_application();
+    println!("\n######################");
+    println!("Rusty Password Manager");
+    println!("######################\n");
 
-    let result = panic::catch_unwind(|| {
-        println!("######################");
-        println!("Rusty Password Manager");
-        println!("######################\n");
 
-        println!("What would you like to do?");
+    if let Ok(master_password) = auth::initialize_application() {
+        loop {
+            println!("\n######################");
+            println!("Rusty Password Manager");
+            println!("######################\n");
 
-        let mut user_input = String::new();
-        io::stdin()
-            .read_line(&mut user_input)
-            .expect("Failed to read line.");
+            println!("What would you like to do? (create, delete, search, help, quit)");
 
-        let user_input = user_input.trim().to_ascii_lowercase();
+            let mut user_input = String::new();
+            io::stdin().read_line(&mut user_input).expect("Failed to read line");
 
-        match user_input.as_str() {
-            "create" => workflows::create_password_workflow(&master_password),
-            "delete" => workflows::delete_password_workflow(&master_password),
-            "search" => workflows::search_password_workflow(&master_password),
-            _ => workflows::display_help_workflow(),
+            let user_input = user_input.trim().to_ascii_lowercase();
+
+            match user_input.as_str() {
+                "create" => {
+                    if let Err(e) = workflows::create_password_workflow(&master_password) {
+                        eprintln!("Error creating password: {}", e);
+                    }
+                },
+                "delete" => {
+                    if let Err(e) = workflows::delete_password_workflow(&master_password) {
+                        eprintln!("Error deleting password: {}", e);
+                    }
+                },
+                "search" => {
+                    if let Err(e) = workflows::search_password_workflow(&master_password) {
+                        eprintln!("Error searching password: {}", e);
+                    }
+                },
+                "help" => workflows::display_help_workflow(),
+                "quit" => break,
+                _ => println!("Invalid command. Type 'help' for available commands."),
+            }
         }
-    });
-
-    if result.is_err() {
-        println!("An unexpected error occurred. Cleaning up and exiting...");
+    } else {
+        println!("Failed to initialize application. Exiting.");
+        process::exit(1);
     }
+
+    println!("Thank you for using Rusty Password Manager. Goodbye!");
 }
