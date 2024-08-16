@@ -3,7 +3,7 @@ use crate::models::Information;
 use std::{env, fs, io, process};
 use std::path::Path;
 use serde_json::Value;
-use crate::{auth, main};
+use crate::{auth};
 
 pub fn create_password_workflow(master_password: &str) {
     let encrypted_path = env::var("ENCRYPTED_FILE").expect("ENCRYPTED_FILE not set");
@@ -97,7 +97,8 @@ pub fn search_password_workflow(password: &str) {
         } else if user_input == "quit" {
             process::exit(1)
         } else if user_input == "back" {
-            main()
+            todo!("HANDLE USER GOING BACK")
+            // main()
         } else {
             auth::clear_previous_lines(4)
         }
@@ -129,8 +130,21 @@ fn handle_search(json_data: Value, user_value: &str, user_key: &str) {
 
 }
 
-pub fn display_help_workflow() {
-    todo!("Implement display_help_workflow");
+pub(crate) fn display_help_workflow() {
+    print!("\x1B[2J\x1B[1;1H");
+    println!("Rusty Password Manager Help:");
+    println!();
+    println!("Usage:");
+    println!("  create - Create a new password entry");
+    println!("  delete - Delete an existing password entry");
+    println!("  search - Search for a specific password entry");
+    println!();
+    println!("Available commands:");
+    println!("  back - Go back to the main menu");
+    println!("  quit - Quit the program");
+    println!();
+    println!("Note:");
+    println!("  You will be prompted to enter your master password for certain actions.");
 }
 
 fn encrypt_and_cleanup(password: &[u8], decrypted_path: &str) {

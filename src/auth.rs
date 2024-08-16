@@ -1,7 +1,7 @@
 use std::{env, process};
 use sha3::{Sha3_512, Digest};
 use rpassword::read_password;
-use hex;
+// use hex;
 use dotenv::dotenv;
 
 pub fn initialize_application() -> String {

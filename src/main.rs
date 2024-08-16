@@ -1,5 +1,4 @@
-use std::{env, fs, io, panic};
-use std::path::Path;
+use std::{io, panic};
 
 mod auth;
 mod file_ops;
@@ -32,16 +31,5 @@ fn main() {
 
     if result.is_err() {
         println!("An unexpected error occurred. Cleaning up and exiting...");
-    }
-}
-
-/// Ensures that the decrypted file is encrypted and deleted.
-fn cleanup_and_encrypt(master_password: &str, decrypted_path: &str) {
-    if Path::new(decrypted_path).exists() {
-        file_ops::encrypt_file(master_password.as_bytes());
-        fs::remove_file(decrypted_path).expect("Failed to delete decrypted file during cleanup");
-        println!("Cleanup complete: Encrypted and deleted plaintext passwords.");
-    } else {
-        println!("No decrypted file found. Cleanup not required.");
     }
 }
