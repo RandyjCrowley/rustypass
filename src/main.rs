@@ -161,7 +161,7 @@ fn create_password_workflow(password: &str) {
     }
 }
 
-fn delete_password_workflow(password: &str) {
+fn delete_password_workflow(_password: &str) {
     todo!("delete_password_workflow")
 }
 
