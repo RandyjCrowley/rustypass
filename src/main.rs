@@ -93,8 +93,8 @@ struct Information {
 }
 fn create_password_workflow(password: &str) {
     // Retrieve the encrypted and decrypted paths from environment variables
-    let encrypted_path = env::var("ENCRYPTED_PATH").expect("ENCRYPTED_PATH not set");
-    let decrypted_path = env::var("DECRYPTED_PATH").expect("DECRYPTED_PATH not set");
+    let encrypted_path = env::var("ENCRYPTED_FILE").expect("ENCRYPTED_FILE not set");
+    let decrypted_path = env::var("DECRYPTED_FILE").expect("DECRYPTED_FILE not set");
 
     // Decrypt the file (if it exists)
     if Path::new(&encrypted_path).exists() {
@@ -171,8 +171,8 @@ fn display_help_workflow() {
 
 fn encrypt_file(password: &[u8]) {
     // Retrieve the encrypted and decrypted paths from environment variables
-    let output_path = env::var("ENCRYPTED_PATH").expect("ENCRYPTED_PATH not set");
-    let input_path = env::var("DECRYPTED_PATH").expect("DECRYPTED_PATH not set");
+    let output_path = env::var("ENCRYPTED_FILE").expect("ENCRYPTED_FILE not set");
+    let input_path = env::var("DECRYPTED_FILE").expect("DECRYPTED_FILE not set");
 
     let mut input_file = File::open(input_path).expect("uh oh");
     let mut buffer = Vec::new();
@@ -186,14 +186,14 @@ fn encrypt_file(password: &[u8]) {
 
 fn decrypt_file(password: &[u8]) {
     // Retrieve the encrypted and decrypted paths from environment variables
-    let input_path = env::var("ENCRYPTED_PATH").expect("ENCRYPTED_PATH not set");
-    let output_path = env::var("DECRYPTED_PATH").expect("DECRYPTED_PATH not set");
+    let input_path = env::var("ENCRYPTED_FILE").expect("ENCRYPTED_FILE not set");
+    let output_path = env::var("DECRYPTED_FILE").expect("DECRYPTED_FILE not set");
 
     // Open the encrypted file
     let mut input_file = File::open(input_path).expect("uh oh");
 
     // Create a Cocoon instance with the provided password
-    let mut cocoon = Cocoon::new(password);
+    let cocoon = Cocoon::new(password);
 
     // Decrypt the data
     let decrypted_data = cocoon.parse(&mut input_file).expect(" uh oh");
