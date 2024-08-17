@@ -6,18 +6,10 @@ mod workflows;
 mod models;
 
 fn main() {
-    println!("\n######################");
-    println!("Rusty Password Manager");
-    println!("######################\n");
-
-
     if let Ok(master_password) = auth::initialize_application() {
         loop {
-            println!("\n######################");
-            println!("Rusty Password Manager");
-            println!("######################\n");
-
-            println!("What would you like to do? (create, delete, search, help, quit)");
+            handle_page_change();
+            println!("What would you like to do? (create, update, delete, search, help, quit)");
 
             let mut user_input = String::new();
             io::stdin().read_line(&mut user_input).expect("Failed to read line");
@@ -40,6 +32,11 @@ fn main() {
                         eprintln!("Error searching password: {}", e);
                     }
                 },
+                "update" => {
+                    if let Err(e) = workflows::search_password_workflow(&master_password) {
+                        eprintln!("Error searching password: {}", e);
+                    }
+                }
                 "help" => workflows::display_help_workflow(),
                 "quit" => break,
                 _ => println!("Invalid command. Type 'help' for available commands."),
@@ -51,4 +48,11 @@ fn main() {
     }
 
     println!("Thank you for using Rusty Password Manager. Goodbye!");
+}
+
+fn handle_page_change() {
+    print!("\x1B[2J\x1B[1;1H");
+    println!("######################");
+    println!("Rusty Password Manager");
+    println!("######################\n");
 }

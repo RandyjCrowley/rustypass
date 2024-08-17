@@ -3,9 +3,10 @@ use crate::models::Information;
 use std::{env, fs, io, process};
 use std::path::Path;
 use serde_json::Value;
-use crate::auth;
+use crate::{auth, handle_page_change};
 
 pub fn create_password_workflow(master_password: &str) -> Result<(), Box<dyn std::error::Error>> {
+    handle_page_change();
     let encrypted_path = env::var("ENCRYPTED_FILE")?;
     let decrypted_path = env::var("DECRYPTED_FILE")?;
 
@@ -19,13 +20,14 @@ pub fn create_password_workflow(master_password: &str) -> Result<(), Box<dyn std
     let new_entry = collect_user_information()?;
     append_new_entry(&mut data, new_entry).expect("TODO: panic message");
     write_decrypted_data(&decrypted_path, &data)?;
-    encrypt_and_cleanup(master_password.as_bytes(), &decrypted_path)?;
+    encrypt_and_cleanup(master_password.as_bytes()).expect("");
 
     auth::clear_previous_lines(100);
     Ok(())
 }
 
 fn collect_user_information() -> Result<Information, Box<dyn std::error::Error>> {
+
     let mut inputs = vec![String::new(), String::new(), String::new()];
     let prompts = ["site", "username", "password"];
 
@@ -64,7 +66,7 @@ pub fn search_password_workflow(password: &str) -> Result<(), Box<dyn std::error
     let decrypted_path = env::var("DECRYPTED_FILE")?;
 
     loop {
-        print!("\x1B[2J\x1B[1;1H");
+        // handle_page_change();
         let mut search = String::new();
         println!("What would you like to search by (site, username, password):");
         io::stdin().read_line(&mut search)?;
@@ -72,17 +74,18 @@ pub fn search_password_workflow(password: &str) -> Result<(), Box<dyn std::error
         let user_input = search.trim().to_ascii_lowercase();
 
         if !["site", "username", "password", "quit", "back"].contains(&user_input.as_str()) {
-            auth::clear_previous_lines(4);
             continue;
         }
 
         if user_input == "quit" {
+            handle_page_change();
+            encrypt_and_cleanup(password.as_bytes()).expect("");
             process::exit(1);
         } else if user_input == "back" {
             // todo!("Implement logic to go back to the main menu");
             continue;
         }
-
+        handle_page_change();
         let mut keyword = String::new();
         println!("What {} would you like to search for?", user_input);
         io::stdin().read_line(&mut keyword)?;
@@ -95,11 +98,12 @@ pub fn search_password_workflow(password: &str) -> Result<(), Box<dyn std::error
 
         let data = read_decrypted_data(&decrypted_path)?;
         handle_search(data, keyword.trim(), user_input.as_str());
+        encrypt_and_cleanup(password.as_bytes()).expect("")
     }
 }
 
 fn handle_search(json_data: Value, user_value: &str, user_key: &str) {
-    print!("\x1B[2J\x1B[1;1H");
+    handle_page_change();
     if let Value::Array(arr) = json_data {
         for item in arr {
             if let Value::Object(ref map) = item {
@@ -136,10 +140,11 @@ pub(crate) fn display_help_workflow() {
     println!("  You will be prompted to enter your master password for certain actions.");
 }
 
-fn encrypt_and_cleanup(password: &[u8], decrypted_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn encrypt_and_cleanup(password: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
+    let input_path = env::var("DECRYPTED_FILE")?;
     encrypt_file(password)?;
-    if Path::new(decrypted_path).exists() {
-        fs::remove_file(decrypted_path)?;
+    if Path::new(&input_path).exists() {
+        fs::remove_file(input_path)?;
     }
     Ok(())
 }
